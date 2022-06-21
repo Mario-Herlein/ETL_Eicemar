@@ -1,8 +1,6 @@
 import requests
-import time
-import datetime as dt
 import json
-inicio = time.time()
+
 
 
 
@@ -11,6 +9,9 @@ with open('./config.json', 'r') as file:
 
 
 class Connection():
+    """
+    Esta Clase permite conectarse a la API  que se conecta a la BDD del GC3
+    """
     USER=None
     PASS=None
     URLTOKEN=None
@@ -39,6 +40,17 @@ class Connection():
         self.token = token["token"]
 
     def vesselSearch(self,mmsi,start,finish):
+        """Usando la conexión a la API, busca 
+        las posiciones del buque por MMSI, acorde las fechas determinadas 
+
+        Args:
+            mmsi (str): Numero MMSI del buque a buscar
+            start (date): Fecha desde donde comienza la busqueda
+            finish (date): Fecha hasta donde finaliza la busqueda
+
+        Returns:
+            json:Contiene todos los datos de posiciones del buque, incluidas las fuentes de datos
+        """
         token= self.token
         self.API_HOST=f"https://sig.prefecturanaval.gob.ar/apihost/rest/services/Realtime/positions_nmea/FeatureServer/0/query?f=json&token={token}&where=MMSI = '{mmsi}' AND msgTime > date '{start}' AND msgTime < date '{finish}'"
         response = requests.get(self.API_HOST)
@@ -46,28 +58,3 @@ class Connection():
 
 
 
-ENTORNO="PROD"
-conexion = Connection(USER = config[ENTORNO]['user']
-                    , PASS = config[ENTORNO]['pass']
-                    , URLTOKEN = config[ENTORNO]['urlToken']
-                    , REFERER = config[ENTORNO]['referer'] )
-
-start='2022-04-30'
-finish='2022-05-30'
-token=conexion.token
-mmsi="701078000"
-
-busqueda=conexion.vesselSearch(mmsi,start,finish )
-
-print("Busqueda")
-a=busqueda["features"]
-c=a[1]["attributes"]
-print(c)
-print(len(a))
-print("Finalizado")
-finish=dt.datetime.today()
-
-
-fin = time.time()
-
-print("Tiempo de ejecución", fin-inicio)

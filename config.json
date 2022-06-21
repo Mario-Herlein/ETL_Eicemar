@@ -5,6 +5,7 @@
                 "pass": "mi2OYPIN1i.N",
                 "urlToken": "https://sig.prefecturanaval.gob.ar/portal/sharing/rest/generateToken",
                 "referer": "https://sig.prefecturanaval.gob.ar/portal",
+                "loadroute": "listadoBuques",
                 "downloadroute": "dataprod",
                 "logs":"logsprod"
 },
@@ -13,6 +14,7 @@
                 "pass": "5wsu4Mqa",
                 "urlToken": "https://gis-desa.prefecturanaval.gob.ar/portal/sharing/rest/generateToken",
                 "referer": "https://gis-desa.prefecturanaval.gob.ar/portal",
+                "loadroute": "listadoBuques",
                 "downloadroute": "datadesa",
                 "logs":"logsdesa"
 }
