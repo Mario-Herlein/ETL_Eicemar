@@ -11,7 +11,7 @@ conexion = Connection(USER = config[ENTORNO]['user']
                     , URLTOKEN = config[ENTORNO]['urlToken']
                     , REFERER = config[ENTORNO]['referer'] )
 
-start='2022-05-29'
+start='2022-04-29'
 finish='2022-05-30'
 mmsi="701078000"
 
