@@ -1,6 +1,7 @@
-from xml.dom.minidom import Element
+import pandas as pd
 import requests
 import json
+from tqdm import tqdm
 
 
 
@@ -92,3 +93,35 @@ class Search():
         print("Buscando Posiciones")
         
         return response.json()
+
+
+    def trackDataframe(json):
+        """Dataframe generator
+
+        Args:
+            json (json): Json from Search.trackSearch with tackVessel information
+        """
+        positions=json["positions"]
+        list_positions=[]
+        position={}
+
+        for pos in tqdm(positions):
+            position={"FH":pos["msgTime"],
+                       "SOG":pos['SpeedOverGroud'],
+                       "COG":pos['CourseOverGround']}
+            try:
+                        position.update({"X":pos["location"]["geo"]["coordinates"][0],
+                 "Y":pos["location"]["geo"]["coordinates"][1]})
+            
+            except KeyError:
+                print( f" El ObjectId {pos['objectId']}, no tiene coordenadas")
+                continue
+            list_positions.append(position)
+        df=pd.DataFrame(list_positions)
+
+        return df
+
+
+
+
+
