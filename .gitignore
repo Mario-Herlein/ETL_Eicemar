@@ -9,7 +9,8 @@ config.json
 # C extensions
 *.so
 
-# Distribution / packaging
+# Distribution / packaging /varios
+ETL/Varios/
 .Python
 build/
 develop-eggs/
@@ -17,7 +18,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+Lib/site-packages
 lib64/
 parts/
 sdist/

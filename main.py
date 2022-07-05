@@ -1,5 +1,5 @@
 import json
-from ETL.Connection import Connection
+from ETL.Extract import Connection , Search
 
 
 with open("./config.json", "r") as f:
@@ -11,20 +11,27 @@ conexion = Connection(USER = config[ENTORNO]['user']
                     , URLTOKEN = config[ENTORNO]['urlToken']
                     , REFERER = config[ENTORNO]['referer'] )
 
-start='2022-04-29'
-finish='2022-05-30'
-mmsi="701078000"
+
+
+token=conexion.token
+start='2022-07-02'
+finish='2022-07-04'
+mmsi="412334077"
 
 
 
-busqueda=conexion.vesselSearch(mmsi,start,finish)
+busqueda=Search.trackSearch(token,mmsi,start,finish) 
 
 
 
+
+print(busqueda)
 
 print("Busqueda")
-a=busqueda["features"]
-c=a[1]["attributes"]
-print(c)
-print(len(a))
+# a=busqueda["features"]
+# c=a[1]["attributes"]
+print(type(busqueda))
+# print(len(a))
 print("Finalizado")
+
+# print(conexion.token)
