@@ -1,8 +1,8 @@
 
 
 {"PROD": {
-                "user":"admin",
-                "pass": "mi2OYPIN1i.N",
+                "user":"servicios",
+                "pass": "S3rv1c10s/*-+GIS",
                 "urlToken": "https://sig.prefecturanaval.gob.ar/portal/sharing/rest/generateToken",
                 "referer": "https://sig.prefecturanaval.gob.ar/portal",
                 "loadroute": "listadoBuques",

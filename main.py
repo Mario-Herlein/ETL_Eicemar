@@ -1,6 +1,8 @@
 import logging
 import json
+import datetime as dt
 from ETL.Extract import Connection , Search
+
 
 def main():
     """
@@ -20,15 +22,15 @@ def main():
                         , REFERER = config[ENTORNO]['referer'] )
 
 
+    
+    token= conexion.token()
 
-    token=conexion.token
-    start='2022-07-02'
-    finish='2022-07-04'
-    mmsi="701006867"
+    start=str(dt.datetime.now()-dt.timedelta(days=1))
+    finish=str(dt.datetime.now())
+    mmsi="440528000"
 
 
-
-    busqueda=Search.trackSearch(token,mmsi,start,finish)
+    busqueda=Search.trackSearch(token, mmsi,start,finish)
 
 
     df=Search.trackDataframe(busqueda)
@@ -36,9 +38,12 @@ def main():
 
     print(df.SOG.max())
 
-    print(busqueda["positions"][-1])
+    # print(busqueda["positions"][-1])
+    # print(type(dt.datetime.strptime(busqueda["positions"][-1]["msgTime"], '%Y-%m-%d %H:%M:%S.%f')))
 
 
 
 if __name__ == '__main__':
+    print("Iniciando Nereo...")
     main()
+

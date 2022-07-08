@@ -29,6 +29,7 @@ class Connection():
         self.URLTOKEN=URLTOKEN
         self.REFERER=REFERER
 
+    def token(self):
         self.payload = {
             "username": self.USER,
             "password": self.PASS,
@@ -38,11 +39,15 @@ class Connection():
             "f": "pjson"
         }
         response= requests.request("POST",self.URLTOKEN,data=self.payload)
-        token=response.json()
-        self.token = token["token"]
-        logging.info(f"Generando token: {self.token}")
-        print("Generando token")
-        
+        try:
+            token=response.json()
+            self.token = token["token"]
+            logging.info(f"Generando token: {self.token}")
+        except:
+            self.token=response.json()["error"]
+            logging.warning(f"{self.token}")
+
+        return self.token
 
 
 class Search():
@@ -70,7 +75,7 @@ class Search():
             print(f"MMSI {mmsi} not found")
             return None
 
-    def trackSearch(token,mmsi,desde,hasta):
+    def trackSearch(token:None,mmsi,desde,hasta):
         """  Using API connection, look up vessel positions by MMSI, according to given dates
         Args:
             mmsi (str): MMSI number of the vessel to search
@@ -80,7 +85,6 @@ class Search():
         returns:
             json: Contains all position data of the ship, including data sources
         """
-
         url=f"https://sig.prefecturanaval.gob.ar/apiadmin/track/get?f=json&token={token}"
         ElementId=Search.vessel_by_Mmsi(mmsi)
         payload = json.dumps({"ElementId": ElementId,
@@ -125,7 +129,7 @@ class Search():
             list_positions.append(position)
         df=pd.DataFrame(list_positions)
 
-        print("Porcentaje de ObjectId sin coordenadas: ", round((len(list_KeyError)*100)/len(df),2),"%" )
+        logging.info(f"Porcentaje de ObjectId sin coordenadas:{round((len(list_KeyError)*100)/len(df),2)}%" )
 
         return df
 
