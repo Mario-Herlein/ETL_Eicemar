@@ -2,6 +2,7 @@ import logging
 import json
 import datetime as dt
 from ETL.Extract import Connection , Search
+from dateutil import parser
 
 
 def main():
@@ -25,12 +26,14 @@ def main():
     
     token= conexion.token()
 
-    start=str(dt.datetime.now()-dt.timedelta(days=1))
-    finish=str(dt.datetime.now())
+    start=str(dt.datetime.now()-dt.timedelta(days=30))
+    finish=dt.datetime.now()
     mmsi="440528000"
 
 
-    busqueda=Search.trackSearch(token, mmsi,start,finish)
+    busqueda=Search.trackSearch(token, mmsi,start,str(finish))
+
+    print(type(busqueda["positions"][-1]["msgTime"]))
 
 
     df=Search.trackDataframe(busqueda)
@@ -39,8 +42,17 @@ def main():
     print(df.SOG.max())
 
     # print(busqueda["positions"][-1])
-    # print(type(dt.datetime.strptime(busqueda["positions"][-1]["msgTime"], '%Y-%m-%d %H:%M:%S.%f')))
+    utc_dt=busqueda["positions"][-1]["msgTime"]
+    print(type(utc_dt))
+    # iso_date = parser.parse(utc_dt, tzinfos=None)
+    # print('ISO datetime:', iso_date)
 
+    # print('ISO datetime2:', iso_date.replace(tzinfo=None))
+
+    # if iso_date.replace(tzinfo=None)<finish.replace(tzinfo=None):
+    #     print("Faltan datos")
+    # else:
+    #     print("datos completos")
 
 
 if __name__ == '__main__':

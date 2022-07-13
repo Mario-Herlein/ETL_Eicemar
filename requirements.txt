@@ -16,6 +16,7 @@ defusedxml==0.7.1
 entrypoints==0.4
 executing==0.8.3
 fastjsonschema==2.15.3
+geographiclib==2.0
 idna==3.3
 ipython==8.4.0
 ipython-genutils==0.2.0

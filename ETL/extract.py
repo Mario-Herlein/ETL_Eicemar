@@ -15,13 +15,6 @@ class Connection():
     """
     This Class allows connecting to the API that connects to the GC3 DB
     """
-    USER=None
-    PASS=None
-    URLTOKEN=None
-    API_HOST = None
-    REFERER=None
-    conn=None
-
 
     def __init__(self, USER,PASS,URLTOKEN,REFERER):
         self.USER=USER
@@ -39,15 +32,18 @@ class Connection():
             "f": "pjson"
         }
         response= requests.request("POST",self.URLTOKEN,data=self.payload)
-        try:
-            token=response.json()
-            self.token = token["token"]
-            logging.info(f"Generando token: {self.token}")
-        except:
-            self.token=response.json()["error"]
-            logging.warning(f"{self.token}")
-
-        return self.token
+        i=0
+        while i<5:
+            try:
+                token=response.json()
+                self.token = token["token"]
+                logging.info(f"INFO Generando token: {self.token}")
+                return self.token
+            except:
+                self.token=response.json()["error"]
+                logging.warning(f"WARNING! {self.token}")
+                i+=1
+        logging.warning("ERROR! Luego de 5 intentos no se puedo conectar a la API")
 
 
 class Search():
@@ -103,7 +99,6 @@ class Search():
     def trackDataframe(json):
         """
         It takes a json file, loops through it, and creates a dataframe with the data
-        
         :param json: the json file
         :return: A dataframe with the following columns:
         FH, SOG, COG, X, Y
@@ -114,7 +109,7 @@ class Search():
         position={}
 
         for pos in tqdm(positions):
-            position={"FH":pos["msgTime"],
+            position={"FH":pos["msgTime"].replace(tzinfo=None),
                        "SOG":pos['SpeedOverGroud'],
                        "COG":pos['CourseOverGround']}
             try:
