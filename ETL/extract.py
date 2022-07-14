@@ -3,6 +3,8 @@ import pandas as pd
 import requests
 import json
 from tqdm import tqdm
+from dateutil import parser
+import traceback
 
 
 
@@ -41,9 +43,9 @@ class Connection():
                 return self.token
             except:
                 self.token=response.json()["error"]
-                logging.warning(f"WARNING! {self.token}")
+                logging.warning(f"WARNING token no generado {self.token}")
                 i+=1
-        logging.warning("ERROR! Luego de 5 intentos no se puedo conectar a la API")
+        logging.warning("ERROR Luego de 5 intentos no se puedo conectar a la API")
 
 
 class Search():
@@ -61,15 +63,21 @@ class Search():
         mmsi = str(mmsi)
         payload = json.dumps({"criteria": {"MMSI": mmsi,"elementType": "buque"}})
         headers = {'Content-Type': 'application/json'}
+        print("Buscando elementId")
+        logging.info("INFO - Buscando elementId")
         try:
             url = "https://sig.prefecturanaval.gob.ar/apiadmin/elements/search?f=json"
             response = requests.request("POST", url, headers=headers, data=payload)
             elementId=response.json()[0]["elementId"]
             return elementId
-
-        except:
-            print(f"MMSI {mmsi} not found")
-            return None
+        except ValueError:
+                logging.critical("CRITICAL - La API no responde correctamente, 'requests.exceptions.JSONDecodeError'")
+                print("CRITICAL - La API no responde correctamente, 'requests.exceptions.JSONDecodeError'")
+                return None
+        except IndexError:
+                logging.error(f"ERROR - MMSI {mmsi} not found")
+                print(f"ERROR - MMSI {mmsi} not found")
+                return None
 
     def trackSearch(token:None,mmsi,desde,hasta):
         """  Using API connection, look up vessel positions by MMSI, according to given dates
@@ -81,19 +89,29 @@ class Search():
         returns:
             json: Contains all position data of the ship, including data sources
         """
-        url=f"https://sig.prefecturanaval.gob.ar/apiadmin/track/get?f=json&token={token}"
         ElementId=Search.vessel_by_Mmsi(mmsi)
-        payload = json.dumps({"ElementId": ElementId,
-        "from": desde,
-        "to": hasta,
-        "includeH": True,
-        "light": True,
-        "addStatistics": True
-        })
-        headers = {'Content-Type': 'application/json'}
-        print("Buscando Posiciones")
-        response = requests.request("POST", url, headers=headers, data=payload)
-        return response.json()
+        if ElementId:
+            url=f"https://sig.prefecturanaval.gob.ar/apiadmin/track/get?f=json&token={token}"
+            payload = json.dumps({"ElementId": ElementId,
+            "from": desde,
+            "to": hasta,
+            "includeH": True,
+            "light": True,
+            "addStatistics": True
+            })
+            headers = {'Content-Type': 'application/json'}
+            print("Buscando Posiciones")
+
+            response = requests.request("POST", url, headers=headers, data=payload)
+            try:
+                respuesta= response.json()
+                return respuesta
+            except ValueError:
+                logging.critical("CRITICAL - La API no responde correctamente, 'requests.exceptions.JSONDecodeError'")
+                print("CRITICAL - La API no responde correctamente, 'requests.exceptions.JSONDecodeError'")
+                return None
+        else:
+            print("No se encontró el elementID")
 
 
     def trackDataframe(json):
@@ -109,7 +127,8 @@ class Search():
         position={}
 
         for pos in tqdm(positions):
-            position={"FH":pos["msgTime"].replace(tzinfo=None),
+            msgTime=parser.parse(pos["msgTime"], ignoretz=True)
+            position={"FH":msgTime,
                        "SOG":pos['SpeedOverGroud'],
                        "COG":pos['CourseOverGround']}
             try:
@@ -117,14 +136,13 @@ class Search():
                  "Y":pos["location"]["geo"]["coordinates"][1]})
 
             except KeyError:
-                # print( f" El ObjectId {pos['objectId']}, no tiene coordenadas")
                 list_KeyError.append(pos['objectId'])
                 continue
 
             list_positions.append(position)
         df=pd.DataFrame(list_positions)
 
-        logging.info(f"Porcentaje de ObjectId sin coordenadas:{round((len(list_KeyError)*100)/len(df),2)}%" )
+        logging.info(f"INFO - Porcentaje de ObjectId sin coordenadas:{round((len(list_KeyError)*100)/len(df),2)}%" )
 
         return df
 

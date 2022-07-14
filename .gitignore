@@ -31,7 +31,8 @@ share/python-wheels/
 *.egg
 MANIFEST
 pruebas.py
-Untitled.ipynb
+untitled.ipynb
+varios/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

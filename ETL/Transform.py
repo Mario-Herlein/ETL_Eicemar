@@ -23,7 +23,27 @@ class Transform:
             cog+=360
         return dist,cog
 
+    def dfClean(df):
+        """
+        It takes a dataframe as an input, converts the SOG_mean column to a float, drops all rows with
+        missing values, and resets the index
+
+        :param df: the dataframe to be cleaned
+        :return: the dataframe that has been cleaned.
+        """
+        df["SOG_mean"]=df["SOG_mean"].astype("float64")
+        df.dropna(inplace=True)
+        df.reset_index(drop=True, inplace=True)
+        return df
+
     def addNewCols(df):
+        """
+        It takes a dataframe, and adds new columns to it, based on the values of the existing columns,
+        and it delete the outlier data that is over the maximum speed rigistered
+
+        :param df: the dataframe
+        :return: A dataframe with the new columns added.
+        """
         max_SOG=df.SOG.max()
         row=0
         pbar = tqdm_notebook(total=len(df))
@@ -31,7 +51,7 @@ class Transform:
             pbar.update(row)
             indice=row+1
             tiempo=(df.loc[indice,'FH']-df.loc[row,'FH']).total_seconds()
-            dist,cog=getDistCog( df.loc[row, "Y"],df.loc[row, "X"]  , df.loc[indice, "Y"], df.loc[indice, "X"])
+            dist,cog=Transform.getDistCog( df.loc[row, "Y"],df.loc[row, "X"]  , df.loc[indice, "Y"], df.loc[indice, "X"])
             knots= dist/(tiempo/3600)
             # Si la velocidad calculada es mayor a la velocidad máxima registrada por el buque, recalculo con la siguiente posición
             while knots>max_SOG:
@@ -39,7 +59,7 @@ class Transform:
                 indice+=1
                 if indice<len(df)-1:
                     tiempo=(df.loc[indice,'FH']-df.loc[row,'FH']).total_seconds()
-                    dist,cog=getDistCog(df.loc[row, "Y"],df.loc[row, "X"]  , df.loc[indice, "Y"], df.loc[indice, "X"])
+                    dist,cog=Transform.getDistCog(df.loc[row, "Y"],df.loc[row, "X"]  , df.loc[indice, "Y"], df.loc[indice, "X"])
                     knots=dist/(tiempo/3600)
                 else:
                     break
@@ -49,4 +69,8 @@ class Transform:
                 df.loc[indice,"DISTANCIA_Nm"]=dist
                 df.loc[indice,"COG_mean"]=cog
                 df.loc[indice,"STEP"]=tiempo
+        df=Transform.dfClean(df)
         pbar.close()
+        return df
+
+
