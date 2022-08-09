@@ -1,3 +1,4 @@
+from email import message
 import logging
 import pandas as pd
 import requests
@@ -47,6 +48,25 @@ class Connection():
                 i+=1
         logging.warning("ERROR Luego de 5 intentos no se puedo conectar a la API")
 
+    def errorConnection(message):
+        """
+        It sends an email to the recipient(s) with the subject and message specified in the function
+        
+        :param message: The message you want to send
+        """
+        import smtplib  
+        sender = "marioherlein@gmail.com"
+        recipients = ["marioherlein@hotmail.com"] #"dsig@prefecturanaval.gov.ar" , "soportepna@aeroterra.com"
+        subject = "Error API GC3"
+        message = f"Subject: {subject} \n\n {message}"
+        password = "drghwpcyuxawrczj"
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login("marioherlein@gmail.com" , password)
+        server.sendmail(sender, recipients , message)
+        server.quit()
+        print("\nCorreo enviado")
+
 
 class Search():
 
@@ -71,13 +91,23 @@ class Search():
             elementId=response.json()[0]["elementId"]
             return elementId
         except ValueError:
-                logging.critical("CRITICAL - La API no responde correctamente, 'requests.exceptions.JSONDecodeError'")
-                print("CRITICAL - La API no responde correctamente, 'requests.exceptions.JSONDecodeError'")
-                return None
+            message = "CRITICAL - La API no responde correctamente, 'requests.exceptions.JSONDecodeError'"
+            logging.critical(message)
+            print(message)
+            Connection.errorConnection(message)
+            return None
         except IndexError:
-                logging.error(f"ERROR - MMSI {mmsi} not found")
-                print(f"ERROR - MMSI {mmsi} not found")
-                return None
+            message = f"ERROR - MMSI {mmsi} not found"
+            logging.error(message)
+            print(message)
+            return None
+        except TimeoutError:
+            message = f"CRITICAL - La API no responde, 'requests.exceptions.ConnectionError'"
+            logging.error(message)
+            print(message)
+            Connection.errorConnection(message)
+            return None
+
 
     def trackSearch(token:None,mmsi,desde,hasta):
         """  Using API connection, look up vessel positions by MMSI, according to given dates
@@ -107,8 +137,10 @@ class Search():
                 respuesta= response.json()
                 return respuesta
             except ValueError:
-                logging.critical("CRITICAL - La API no responde correctamente, 'requests.exceptions.JSONDecodeError'")
-                print("CRITICAL - La API no responde correctamente, 'requests.exceptions.JSONDecodeError'")
+                message = "CRITICAL - La API no responde correctamente, 'requests.exceptions.JSONDecodeError'"
+                logging.critical(message)
+                print(message)
+                Connection.errorConnection(message)
                 return None
         else:
             print("No se encontró el elementID")
