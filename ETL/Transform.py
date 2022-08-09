@@ -1,6 +1,7 @@
 import pandas as pd
 from geographiclib.geodesic import Geodesic
 from tqdm.notebook import tqdm_notebook
+import datetime as dt
 
 class Transform:
 
@@ -23,7 +24,7 @@ class Transform:
             cog+=360
         return dist,cog
 
-    def dfClean(df):
+    def dfCleanNan(df):
         """
         It takes a dataframe as an input, converts the SOG_mean column to a float, drops all rows with
         missing values, and resets the index
@@ -36,6 +37,13 @@ class Transform:
         df.reset_index(drop=True, inplace=True)
         return df
 
+    def dropDuplicates(df):
+        df_without_duplicates = df.drop_duplicates(subset=['FH'])
+        df_sin_0=df_without_duplicates[df_without_duplicates.X!=0]
+        df_sin_0.reset_index(drop=True, inplace=True)
+        return df_sin_0
+
+
     def addNewCols(df):
         """
         It takes a dataframe, and adds new columns to it, based on the values of the existing columns,
@@ -44,6 +52,7 @@ class Transform:
         :param df: the dataframe
         :return: A dataframe with the new columns added.
         """
+        df=Transform.dropDuplicates(df)
         max_SOG=df.SOG.max()
         row=0
         pbar = tqdm_notebook(total=len(df))
@@ -69,7 +78,8 @@ class Transform:
                 df.loc[indice,"DISTANCIA_Nm"]=dist
                 df.loc[indice,"COG_mean"]=cog
                 df.loc[indice,"STEP"]=tiempo
-        df=Transform.dfClean(df)
+        df = Transform.dfCleanNan(df)
+        df["FH"] = df.FH.dt.strftime('%d/%m/%Y %H:%M:%S')
         pbar.close()
         return df
 
