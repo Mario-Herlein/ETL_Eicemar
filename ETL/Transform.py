@@ -1,7 +1,6 @@
 import pandas as pd
 from geographiclib.geodesic import Geodesic
-from tqdm.notebook import tqdm_notebook
-import datetime as dt
+import logging
 
 class Transform:
 
@@ -52,18 +51,17 @@ class Transform:
         :param df: the dataframe
         :return: A dataframe with the new columns added.
         """
+        df.sort_values('FH' , inplace=True)
         df=Transform.dropDuplicates(df)
         max_SOG=df.SOG.max()
         row=0
-        pbar = tqdm_notebook(total=len(df))
         while row<len(df)-1:
-            pbar.update(row)
             indice=row+1
             tiempo=(df.loc[indice,'FH']-df.loc[row,'FH']).total_seconds()
             dist,cog=Transform.getDistCog( df.loc[row, "Y"],df.loc[row, "X"]  , df.loc[indice, "Y"], df.loc[indice, "X"])
             knots= dist/(tiempo/3600)
             # Si la velocidad calculada es mayor a la velocidad máxima registrada por el buque, recalculo con la siguiente posición
-            while knots>max_SOG:
+            while knots>max_SOG and indice<len(df)-1:
                 df.loc[indice,"SOG_mean"]="NaN"
                 indice+=1
                 if indice<len(df)-1:
@@ -71,6 +69,7 @@ class Transform:
                     dist,cog=Transform.getDistCog(df.loc[row, "Y"],df.loc[row, "X"]  , df.loc[indice, "Y"], df.loc[indice, "X"])
                     knots=dist/(tiempo/3600)
                 else:
+                    row=indice
                     break
             else:
                 row=indice
@@ -79,8 +78,7 @@ class Transform:
                 df.loc[indice,"COG_mean"]=cog
                 df.loc[indice,"STEP"]=tiempo
         df = Transform.dfCleanNan(df)
-        df["FH"] = df.FH.dt.strftime('%d/%m/%Y %H:%M:%S')
-        pbar.close()
+        # df["FH"] = df.FH.dt.strftime('%d/%m/%Y %H:%M:%S')
         return df
 
 
