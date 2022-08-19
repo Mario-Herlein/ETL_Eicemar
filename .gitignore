@@ -30,8 +30,6 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-pruebas.py
-untitled.ipynb
 varios/
 
 # PyInstaller

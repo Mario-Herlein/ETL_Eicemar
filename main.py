@@ -1,8 +1,11 @@
+from operator import index
+import pandas as pd
 import logging
 import json
 import datetime as dt
+from datetime import datetime
 from ETL.Extract import Connection , Search
-from dateutil import parser
+from ETL.Transform import Transform
 
 
 def main():
@@ -22,22 +25,30 @@ def main():
                         , URLTOKEN = config[ENTORNO]['urlToken']
                         , REFERER = config[ENTORNO]['referer'] )
 
-
-    
     token= conexion.token()
 
-    start=str(dt.datetime.now()-dt.timedelta(days=1))
-    finish=dt.datetime.now()
-    mmsi="44052800"
-
-
-    busqueda=Search.trackSearch(token, mmsi,start,str(finish))
+    """Las horas son ingresadas en UTC pero devuelve en local"""
+    start= "2022-08-12T09:30:00.000+00:00"#str(dt.datetime.now()-dt.timedelta(days=1))#"2022-08-12T05:00:00.000+00:00"#
+    finish="2022-08-12T12:00:00.000+00:00"#str(dt.datetime.now()) #"2022-08-12T10:00:00.000+00:00"#
+    mmsi= "701000652"#"701006744"
+    
+    busqueda=Search.trackSearch(token, mmsi,start,finish)
 
     # print(type(busqueda["positions"][-1]["msgTime"]))
 
+    df=Search.trackDataframe(busqueda)
+    print(df.shape)
 
-    # df=Search.trackDataframe(busqueda)
+    if df.empty:
+        logging.info("INFO - El buque no tiene posiciones")
+        print("El buque no tiene posiciones")
+        return None
 
+    start =dt.datetime.now()
+    df_mod=Transform.addNewCols(df)
+    finish = dt.datetime.now()
+
+    print(finish - start)
     # last_register=df.iloc[-1]["FH"]
     # print(df.SOG.max())
 
@@ -52,9 +63,21 @@ def main():
     #     print("Faltan datos")
     # else:
     #     print("datos completos")
+    return df_mod
 
 
 if __name__ == '__main__':
-    print("Iniciando Nereo...")
-    main()
+    # a=main()
+    # df=a[["FH","SOG","COG","X","Y"]]
+    # print(a.shape)
+    # print(df)
+    df1=pd.read_csv("maraustral.csv", delimiter=";")
+    # print(df1)
+    df1["FH"]=pd.to_datetime(df1["FH"], format='%d/%m/%Y %H:%M')
+    df1=Transform.addNewCols(df1)
+    # print(df1)
+    df=df1[["FH","SOG","COG","X","Y"]]
+    print(df)
+    df["NOMBRE"]="Mar Austral I"
 
+    df.to_csv("MARAUSTRALI.csv", index=False)

@@ -1,13 +1,11 @@
-from email import message
 import logging
 import pandas as pd
 import requests
 import json
 from tqdm import tqdm
 from dateutil import parser
-import traceback
-
-
+import smtplib
+import datetime as dt
 
 
 with open('./config.json', 'r') as file:
@@ -54,11 +52,10 @@ class Connection():
         
         :param message: The message you want to send
         """
-        import smtplib  
         sender = "marioherlein@gmail.com"
-        recipients = ["marioherlein@hotmail.com"] #"dsig@prefecturanaval.gov.ar" , "soportepna@aeroterra.com"
+        recipients = ["dsig@prefecturanaval.gov.ar" , "soportepna@aeroterra.com"] #"dsig@prefecturanaval.gov.ar" , "soportepna@aeroterra.com"
         subject = "Error API GC3"
-        message = f"Subject: {subject} \n\n {message}"
+        message = f"Subject: {subject} \n\n {message}. This message has been sent automatically"
         password = "drghwpcyuxawrczj"
         server = smtplib.SMTP("smtp.gmail.com", 587)
         server.starttls()
@@ -80,7 +77,7 @@ class Search():
         Returns:
             elementId(string): the unique ID of elements in th db
         """
-        mmsi = str(mmsi)
+        mmsi = str(mmsi).strip()
         payload = json.dumps({"criteria": {"MMSI": mmsi,"elementType": "buque"}})
         headers = {'Content-Type': 'application/json'}
         print("Buscando elementId")
@@ -153,28 +150,31 @@ class Search():
         :return: A dataframe with the following columns:
         FH, SOG, COG, X, Y
         """
+
         positions=json["positions"]
         list_positions=[]
         list_KeyError=[]
-        position={}
+        if len(positions)>0:
+            for pos in tqdm(positions):
+                msgTime=parser.parse(pos["msgTime"], ignoretz=True)
+                position={}
+                try:
+                    position={"FH":msgTime - dt.timedelta(hours=3),
+                            "COG":pos['CourseOverGround'],
+                            "SOG":pos['SpeedOverGroud'],
+                            "X":pos["location"]["geo"]["coordinates"][0],
+                            "Y":pos["location"]["geo"]["coordinates"][1]}
 
-        for pos in tqdm(positions):
-            msgTime=parser.parse(pos["msgTime"], ignoretz=True)
-            position={"FH":msgTime,
-                       "SOG":pos['SpeedOverGroud'],
-                       "COG":pos['CourseOverGround']}
-            try:
-                        position.update({"X":pos["location"]["geo"]["coordinates"][0],
-                 "Y":pos["location"]["geo"]["coordinates"][1]})
+                except KeyError:
+                    list_KeyError.append(pos['objectId'])
+                    continue
 
-            except KeyError:
-                list_KeyError.append(pos['objectId'])
-                continue
-
-            list_positions.append(position)
+                list_positions.append(position)
+        else:
+            return None
         df=pd.DataFrame(list_positions)
 
-        logging.info(f"INFO - Porcentaje de ObjectId sin coordenadas:{round((len(list_KeyError)*100)/len(df),2)}%" )
+        # logging.info(f"INFO - Porcentaje de ObjectId sin coordenadas:{round((len(list_KeyError)*100)/len(df),2)}%" )
 
         return df
 
